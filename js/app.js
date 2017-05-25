@@ -81,6 +81,9 @@
 	let testBtnRunAll;
 	let testPrefix = "%% cTMIDE-TestCases: ";
 
+	let validate;
+	let validateCTM = new cTMIDE.cTM;
+
 	let hints = {
 		testType: {
 			title: "Test type",
@@ -147,14 +150,12 @@
 			onEnter: () => {
 				if (!currentFilename) {
 					swal("No program opened", "No program is currently opened. Please open a program or save your current work, and then return.", "error");
-					setActiveView("editor");
-					return;
+					return false;
 				}
 
 				if (!editorIsProgramPristine()) {
 					swal("Changes not saved", "Please save your changes prior to opening the test case editor.", "error");
-					setActiveView("editor");
-					return;
+					return false;
 				}
 
 				testUpdateCases();
@@ -162,6 +163,54 @@
 			onLeave: () => {
 				testFields.classList.remove("hidden");
 				testCases.innerHTML = "";
+				testInput.value = "";
+				testExpectedOutput.value = "";
+				testType.value = testType.children[0].value;
+			}
+		},
+
+		validate: {
+			onEnter: () => {
+				validateCTM.reset();
+
+				validate.innerHTML = "";
+				let errors = validateCTM.initialize(editor.value, [], "doNotResetOnErrors");
+
+				if (errors) {
+					validate.innerHTML = "<div>The following errors were found:</div><div>" + errors.join("<br>") + "</div>";
+				} else {
+					validate.innerHTML = "<div>No critical errors were found.</div>";
+				}
+
+				if (validateCTM.transitions.length !== 0) {
+					let messages = [];
+					let alphabet = [];
+
+					validateCTM.transitions.forEach((transition) => {
+						if (alphabet.indexOf(transition.input) === -1 && transition.input !== "#") {
+							alphabet.push(transition.input);
+						}
+						if (alphabet.indexOf(transition.output) === -1 && transition.output !== "#") {
+							alphabet.push(transition.output);
+						}
+					});
+
+					messages.push("The alphabet consists of " + alphabet.join(", ") + ".");
+					messages.push("The number of transitions is " + validateCTM.transitions.length + ".");
+					messages.push("The initial state is " + validateCTM.initialState + ".");
+					messages.push("The final state is " + validateCTM.finalState + ".");
+
+					if (validateCTM.transitions.length % alphabet.length !== 0) {
+						messages.push("<b>WARNING</b>: The number of transitions is not divisible by the length of the alphabet!");
+					}
+
+					validate.innerHTML += "<div>" + messages.join("<br>") + "</div>";
+				} else {
+					validate.innerHTML += "<div>No transitions were found.</div>";
+				}
+			},
+			onLeave: () => {
+
 			}
 		}
 	};
@@ -194,6 +243,8 @@
 		testFields = document.getElementsByClassName("test-fields")[0];
 		testBtnRunAll = document.getElementsByClassName("test-btn-run-all")[0];
 
+		validate = document.getElementsByClassName("validate")[0];
+
 		// Bind listeners
 		toolbarBtnNew.addEventListener("click", editorNewProgram);
 
@@ -219,6 +270,10 @@
 
 		toolbarBtnTest.addEventListener("click", () => {
 			setActiveView("test");
+		});
+
+		toolbarBtnValidate.addEventListener("click", () => {
+			setActiveView("validate");
 		});
 
 		// Emulator listeners
@@ -280,6 +335,9 @@
 		testBtnAdd.addEventListener("click", () => {
 			if (testInput.value.trim().length !== 0 && testExpectedOutput.value.trim().length !== 0) {
 				testAddCase(testInput.value.trim(), testExpectedOutput.value.trim(), testType.value);
+				testInput.value = "";
+				testExpectedOutput.value = "";
+				testType.value = testType.children[0].value;
 			} else {
 				swal("Validation error", "Please enter an input and an expected output.", "error");
 			}
@@ -567,7 +625,9 @@
 					let json = JSON.stringify(cases);
 					content = content.replace(firstLineTrimmed, testPrefix + json);
 				} else {
-					if (content.indexOf(firstLine + "\n") !== -1) {
+					if (content.indexOf(firstLine + "\n\n") !== -1) {
+						content = content.replace(firstLine + "\n\n", "");
+					} else if (content.indexOf(firstLine + "\n") !== -1) {
 						content = content.replace(firstLine + "\n", "");
 					} else {
 						content = content.replace(firstLine, "");
@@ -702,6 +762,13 @@
 			return;
 		}
 
+		// Run onEnter listener. If result === false, we don't continue
+		if (views[viewName]) {
+			if (views[viewName].onEnter() === false) {
+				return;
+			}
+		}
+
 		// Run onLeave listener
 		if (activeViewName && views[activeViewName]) {
 			views[activeViewName].onLeave();
@@ -722,9 +789,9 @@
 
 		[].forEach.call(viewBtnNodes, (viewBtnNode) => {
 			if (viewBtnNode.classList.contains("toolbar-btn-" + activeViewName)) {
-				viewBtnNode.classList.remove("visible");
+				viewBtnNode.classList.add("active");
 			} else {
-				viewBtnNode.classList.add("visible");
+				viewBtnNode.classList.remove("active");
 			}
 		});
 
@@ -738,10 +805,5 @@
 				iconBtnNode.classList.add("hidden");
 			}
 		});
-
-		// Run onEnter listener
-		if (views[viewName]) {
-			views[viewName].onEnter();
-		}
 	};
 })();

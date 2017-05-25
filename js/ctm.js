@@ -91,9 +91,10 @@
 	 * #initialize()
 	 * param program: the program in ctm language
 	 * param data: the data in an array. elements should be strings
+	 * param doNotResetOnErrors: for analytical purposes, don't reset the cTM after parsing errors
 	 * returns: array of errors, or undefined
 	 */
-	cTM.prototype.initialize = function (program, data) {
+	cTM.prototype.initialize = function (program, data, doNotResetOnErrors) {
 		// Initialize transitions array
 		this.transitions = [];
 
@@ -175,13 +176,6 @@
 			}
 		}
 
-		// Report errors
-		if (errors.length !== 0) {
-			this.reset();
-
-			return errors;
-		}
-
 		// Set initial and final states
 		this.initialState = initialStates[0];
 		this.finalState = finalStates[0];
@@ -191,6 +185,16 @@
 
 		// Create a Tape using the data
 		this.tape = new Tape(data);
+
+		// Report errors
+		if (errors.length !== 0) {
+
+			if (!doNotResetOnErrors) {
+				this.reset();
+			}
+
+			return errors;
+		}
 	};
 
 	/**
