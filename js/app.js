@@ -412,16 +412,26 @@
 			centerHTML += "<div class=\"emulator-tape-element" + (index === position ? " selected" : "") + "\">" + element + "</div>";
 		});
 
+		emulatorTape.innerHTML = "";
+
 		if (position < 0) {
-			emulatorTape.innerHTML = blankSelected;
+			emulatorTape.innerHTML += blankSelected;
 			for (let i = 0; i < -position - 1; i ++) {
 				emulatorTape.innerHTML += blank;
 			}
 			emulatorTape.innerHTML += centerHTML + blank;
 		} else if (position >= 0 && position < data.length) {
-			emulatorTape.innerHTML = blank + centerHTML + blank;
+			if (data[0] !== "#") {
+				emulatorTape.innerHTML += blank;
+			}
+
+			emulatorTape.innerHTML += centerHTML;
+
+			if (data[data.length - 1] !== "#") {
+				emulatorTape.innerHTML += blank;
+			}
 		} else if (position >= data.length) {
-			emulatorTape.innerHTML = blank + centerHTML;
+			emulatorTape.innerHTML += blank + centerHTML;
 
 			for (let i = 0; i < position - data.length; i ++) {
 				emulatorTape.innerHTML += blank;
