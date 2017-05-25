@@ -149,17 +149,9 @@
 		});
 
 		toolbarBtnSave.addEventListener("click", () => {
-			// Don't allow clicks when the text is equal to Saved!
-			if (toolbarBtnSave.innerHTML === "Saved!") {
-				return;
-			}
 
 			if (currentFilename) {
 				files.save(currentFilename, editor.value);
-				toolbarBtnSave.innerHTML = "Saved!";
-				setTimeout(() => {
-					toolbarBtnSave.innerHTML = "Save";
-				}, 1000);
 			} else {
 				saveProgramAs();
 			}
@@ -419,7 +411,11 @@
 			for (let i = 0; i < -position - 1; i ++) {
 				emulatorTape.innerHTML += blank;
 			}
-			emulatorTape.innerHTML += centerHTML + blank;
+			emulatorTape.innerHTML += centerHTML;
+
+			if (data[data.length - 1] !== "#") {
+				emulatorTape.innerHTML += blank;
+			}
 		} else if (position >= 0 && position < data.length) {
 			if (data[0] !== "#") {
 				emulatorTape.innerHTML += blank;
@@ -431,7 +427,11 @@
 				emulatorTape.innerHTML += blank;
 			}
 		} else if (position >= data.length) {
-			emulatorTape.innerHTML += blank + centerHTML;
+			if (data[0] !== "#") {
+				emulatorTape.innerHTML += blank;
+			}
+
+			emulatorTape.innerHTML += centerHTML;
 
 			for (let i = 0; i < position - data.length; i ++) {
 				emulatorTape.innerHTML += blank;

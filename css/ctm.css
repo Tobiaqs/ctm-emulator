@@ -32,8 +32,27 @@ html, body {
 	display: none;
 }
 
-.toolbar > .toolbar-btn.toolbar-btn-back {
-	font-size: 27.5px;
+.toolbar > .toolbar-btn.toolbar-btn-icon {
+	width: 40px;
+	background-size: 30px 30px;
+	background-position: center center;
+	background-repeat: no-repeat;
+}
+
+.toolbar > .toolbar-btn.toolbar-btn-icon:not(.toolbar-btn-new) {
+	margin-left: 0;
+}
+
+.toolbar > .toolbar-btn.toolbar-btn-new {
+	background-image: url(ic_new.svg);
+}
+
+.toolbar > .toolbar-btn.toolbar-btn-browse {
+	background-image: url(ic_browse.svg);
+}
+
+.toolbar > .toolbar-btn.toolbar-btn-save {
+	background-image: url(ic_save.svg);
 }
 
 .toolbar > .toolbar-btn:hover {
