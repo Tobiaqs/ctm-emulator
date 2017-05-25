@@ -5,39 +5,39 @@
 "use strict";
 
 (function () {
-	window.cTMEmulator = window.cTMEmulator || {};
+	window.cTMIDE = window.cTMIDE || {};
 
 	if (!window.localStorage) {
 		alert("No localStorage support");
 		return;
 	}
 
-	if (!window.localStorage.cTMEmulatorFolder) {
-		window.localStorage.cTMEmulatorFolder = "{}";
+	if (!window.localStorage.cTMIDEFolder) {
+		window.localStorage.cTMIDEFolder = "{}";
 	}
 
 	// Allows for "file" storage in localStorage
 	let files = {
 		save: (filename, content) => {
-			let folder = JSON.parse(window.localStorage.cTMEmulatorFolder);
+			let folder = JSON.parse(window.localStorage.cTMIDEFolder);
 			folder[filename] = content;
-			window.localStorage.cTMEmulatorFolder = JSON.stringify(folder);
+			window.localStorage.cTMIDEFolder = JSON.stringify(folder);
 		},
 		read: (filename) => {
-			let folder = JSON.parse(window.localStorage.cTMEmulatorFolder);
+			let folder = JSON.parse(window.localStorage.cTMIDEFolder);
 			return folder[filename];
 		},
 		delete: (filename) => {
-			let folder = JSON.parse(window.localStorage.cTMEmulatorFolder);
+			let folder = JSON.parse(window.localStorage.cTMIDEFolder);
 			delete folder[filename];
-			window.localStorage.cTMEmulatorFolder = JSON.stringify(folder);
+			window.localStorage.cTMIDEFolder = JSON.stringify(folder);
 		},
 		exists: (filename) => {
-			let folder = JSON.parse(window.localStorage.cTMEmulatorFolder);
+			let folder = JSON.parse(window.localStorage.cTMIDEFolder);
 			return !!folder[filename];
 		},
 		list: () => {
-			let folder = JSON.parse(window.localStorage.cTMEmulatorFolder);
+			let folder = JSON.parse(window.localStorage.cTMIDEFolder);
 			return Object.keys(folder);
 		}
 	};
@@ -58,7 +58,7 @@
 	let toolbarBtnValidate;
 
 	// The cTM instance used by the emulator
-	let emulatorCTM = new cTMEmulator.cTM;
+	let emulatorCTM = new cTMIDE.cTM;
 	let emulatorSteps;
 	let emulatorInput;
 	let emulatorError;

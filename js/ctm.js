@@ -5,7 +5,7 @@
 "use strict";
 
 (function () {
-	window.cTMEmulator = window.cTMEmulator || {};
+	window.cTMIDE = window.cTMIDE || {};
 
 	function Tape (data) {
 		// Initial position is set to 0
@@ -253,6 +253,6 @@
 		eventListeners[eventName].push(listener);
 	};
 
-	window.cTMEmulator.Tape = Tape;
-	window.cTMEmulator.cTM = cTM;
+	window.cTMIDE.Tape = Tape;
+	window.cTMIDE.cTM = cTM;
 })();
