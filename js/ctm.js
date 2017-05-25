@@ -165,9 +165,9 @@
 			}
 		}
 
-		// More than one initial state?
-		if (initialStates.length !== 1 || finalStates.length !== 1) {
-			if (initialStates.length !== 1) {
+		// More than one initial states? Or 0 or more than 1 final states?
+		if (initialStates.length > 1 || finalStates.length !== 1) {
+			if (initialStates.length > 1) {
 				errors.push(initialStates.length + " initial states found. 1 expected.");
 			}
 
@@ -177,7 +177,7 @@
 		}
 
 		// Set initial and final states
-		this.initialState = initialStates[0];
+		this.initialState = initialStates.sort()[0];
 		this.finalState = finalStates[0];
 
 		// Set the current state to the initial state
