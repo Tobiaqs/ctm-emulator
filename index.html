@@ -13,6 +13,7 @@
 	<link rel="stylesheet" href="css/view.editor.css" type="text/css">
 	<link rel="stylesheet" href="css/view.browse.css" type="text/css">
 	<link rel="stylesheet" href="css/view.emulator.css" type="text/css">
+	<link rel="stylesheet" href="css/view.test.css" type="text/css">
 </head>
 <body>
 	<div class="toolbar">
@@ -47,7 +48,21 @@
 
 	<div class="view view-test">
 		<div class="test">
-			
+			<div class="test-fields">
+				<div>Add a test case:</div>
+				<input type="text" class="test-input" placeholder="Input">
+				<input type="text" class="test-expected-output" placeholder="Expected output">
+				<div>
+					<select class="test-type">
+						<option value="exact">Exact match</option>
+						<option value="substring">Substring</option>
+					</select> <div class="hint" data-hint-id="testType"></div>
+				</div>
+				<button class="test-btn-add">Add test case</button>
+				<div>Note: test cases are stored as a single comment in the file that is currently opened.</div>
+			</div>
+			<div class="test-cases"></div>
+			<button class="test-btn-run-all">Run all tests</button>
 		</div>
 	</div>
 

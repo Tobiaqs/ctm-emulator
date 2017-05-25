@@ -18,7 +18,7 @@
 
 	// Allows for "file" storage in localStorage
 	let files = {
-		save: (filename, content) => {
+		write: (filename, content) => {
 			let folder = JSON.parse(window.localStorage.cTMIDEFolder);
 			folder[filename] = content;
 			window.localStorage.cTMIDEFolder = JSON.stringify(folder);
@@ -70,6 +70,25 @@
 	let emulatorBtnRun;
 	let emulatorBtnRestart;
 
+	// Test variables
+	let testCTM = new cTMIDE.cTM;
+	let testInput;
+	let testExpectedOutput;
+	let testType;
+	let testBtnAdd;
+	let testCases;
+	let testFields;
+	let testBtnRunAll;
+	let testPrefix = "%% cTMIDE-TestCases: ";
+
+	let hints = {
+		testType: {
+			title: "Test type",
+			text: "When set to Exact match, the test will run successfully iff the tape contains only the expected output.\n\n" +
+				"When set to Substring, the test will run successfully iff the expected output is a substring of the tape."
+		}
+	};
+
 	let views = {
 		browse: {
 			onEnter: () => {
@@ -106,6 +125,8 @@
 			onEnter: () => {
 				views.emulator.onLeave();
 			},
+			// This method is kind of being abused by other methods
+			// that shouldn't be touching it. Oh well =)
 			onLeave: (leaveInput) => {
 				emulatorCTM.reset();
 
@@ -119,6 +140,28 @@
 				emulatorTape.innerHTML = "";
 				emulatorStats.innerHTML = "";
 				emulatorSteps = 0;
+			}
+		},
+
+		test: {
+			onEnter: () => {
+				if (!currentFilename) {
+					swal("No program opened", "No program is currently opened. Please open a program or save your current work, and then return.", "error");
+					setActiveView("editor");
+					return;
+				}
+
+				if (!editorIsProgramPristine()) {
+					swal("Changes not saved", "Please save your changes prior to opening the test case editor.", "error");
+					setActiveView("editor");
+					return;
+				}
+
+				testUpdateCases();
+			},
+			onLeave: () => {
+				testFields.classList.remove("hidden");
+				testCases.innerHTML = "";
 			}
 		}
 	};
@@ -143,6 +186,14 @@
 		emulatorBtnRun = document.getElementsByClassName("emulator-btn-run")[0];
 		emulatorBtnRestart = document.getElementsByClassName("emulator-btn-restart")[0];
 
+		testInput = document.getElementsByClassName("test-input")[0];
+		testExpectedOutput = document.getElementsByClassName("test-expected-output")[0];
+		testType = document.getElementsByClassName("test-type")[0];
+		testBtnAdd = document.getElementsByClassName("test-btn-add")[0];
+		testCases = document.getElementsByClassName("test-cases")[0];
+		testFields = document.getElementsByClassName("test-fields")[0];
+		testBtnRunAll = document.getElementsByClassName("test-btn-run-all")[0];
+
 		// Bind listeners
 		toolbarBtnNew.addEventListener("click", editorNewProgram);
 
@@ -151,9 +202,8 @@
 		});
 
 		toolbarBtnSave.addEventListener("click", () => {
-
 			if (currentFilename) {
-				files.save(currentFilename, editor.value);
+				files.write(currentFilename, editor.value);
 			} else {
 				editorSaveProgramAs();
 			}
@@ -166,6 +216,12 @@
 		toolbarBtnEditor.addEventListener("click", () => {
 			setActiveView("editor");
 		});
+
+		toolbarBtnTest.addEventListener("click", () => {
+			setActiveView("test");
+		});
+
+		// Emulator listeners
 
 		emulatorInput.addEventListener("keyup", emulatorOnInputChanged);
 
@@ -217,6 +273,29 @@
 
 		emulatorBtnRestart.addEventListener("click", () => {
 			emulatorOnInputChanged();
+		});
+
+		// Test listeners
+
+		testBtnAdd.addEventListener("click", () => {
+			if (testInput.value.trim().length !== 0 && testExpectedOutput.value.trim().length !== 0) {
+				testAddCase(testInput.value.trim(), testExpectedOutput.value.trim(), testType.value);
+			} else {
+				swal("Validation error", "Please enter an input and an expected output.", "error");
+			}
+		});
+
+		testBtnRunAll.addEventListener("click", () => {
+			testRunAllCases();
+		});
+
+		// Hints
+
+		[].forEach.call(document.getElementsByClassName("hint"), (hintNode) => {
+			hintNode.addEventListener("click", () => {
+				let hint = hints[hintNode.attributes["data-hint-id"].value];
+				swal(hint.title, hint.text, "info");
+			});
 		});
 
 		setActiveView("editor");
@@ -422,6 +501,197 @@
 	function emulatorUpdateStats () {
 		emulatorStats.innerHTML = "Transitions taken: " + emulatorSteps + "<br>" +
 			"Current state: " + emulatorCTM.state;
+	};
+
+	// Functions for TEST
+
+	function testUpdateCases () {
+		let cases = testGetCases();
+
+		if (!cases || cases.length === 0) {
+			testBtnRunAll.classList.add("hidden");
+			
+			testCases.innerHTML = "No test cases found.";
+		} else {
+			testBtnRunAll.classList.remove("hidden");
+
+			let html = "<table><tr><td>Input</td><td>Expected output</td><td>Type</td><td></td><td></td></tr>";
+			cases.forEach((_case, index) => {
+				let typeName = [].find.call(testType.children, (node) => node.value === _case.type).innerHTML;
+				html += "<tr><td>" + _case.input + "</td><td>" + _case.expectedOutput + "</td><td>" + typeName + "</td><td><a href=\"javascript:void(0);\" data-run-case=\"" + index + "\">Run</a></td><td><a href=\"javascript:void(0);\" data-delete-case=\"" + index + "\">Delete</a></td></tr>";
+			});
+
+			testCases.innerHTML = html;
+
+			[].forEach.call(testCases.getElementsByTagName("A"), (node) => {
+				node.addEventListener("click", () => {
+					if (node.attributes["data-delete-case"]) {
+						testDeleteCase(node.attributes["data-delete-case"].value * 1);
+					} else if (node.attributes["data-run-case"]) {
+						testRunCase(node.attributes["data-run-case"].value * 1);
+					}
+				});
+			});
+		}
+	};
+
+	function testGetCases () {
+		let content = files.read(currentFilename);
+		let firstLine = content.split("\n").find((line) => line.length !== 0);
+
+		if (firstLine) {
+			let firstLineTrimmed = firstLine.trim();
+
+			let indexOfPrefix = firstLineTrimmed.indexOf(testPrefix);
+
+			if (indexOfPrefix === 0) {
+				let cases = JSON.parse(firstLineTrimmed.substr(testPrefix.length));
+				return cases;
+			}
+		}
+	};
+
+	function testDeleteCase (index) {
+		let content = files.read(currentFilename);
+		let firstLine = content.split("\n").find((line) => line.length !== 0);
+
+		if (firstLine) {
+			let firstLineTrimmed = firstLine.trim();
+
+			let indexOfPrefix = firstLineTrimmed.indexOf(testPrefix);
+
+			if (indexOfPrefix === 0) {
+				let cases = JSON.parse(firstLineTrimmed.substr(testPrefix.length));
+				cases.splice(index, 1);
+				if (cases.length !== 0) {
+					let json = JSON.stringify(cases);
+					content = content.replace(firstLineTrimmed, testPrefix + json);
+				} else {
+					if (content.indexOf(firstLine + "\n") !== -1) {
+						content = content.replace(firstLine + "\n", "");
+					} else {
+						content = content.replace(firstLine, "");
+					}
+				}
+				files.write(currentFilename, content);
+				editor.value = content;
+				testUpdateCases();
+			}
+		}
+	};
+
+	function testAddCase (input, expectedOutput, type) {
+		let _case = {
+			input: input,
+			expectedOutput: expectedOutput,
+			type: type
+		};
+
+		let content = files.read(currentFilename);
+		let firstLine = content.split("\n").find((line) => line.length !== 0);
+
+		if (firstLine) {
+			let firstLineTrimmed = firstLine.trim();
+
+			let indexOfPrefix = firstLineTrimmed.indexOf(testPrefix);
+
+			if (indexOfPrefix === 0) {
+				let cases = JSON.parse(firstLineTrimmed.substr(testPrefix.length));
+				cases.push(_case);
+				if (cases.length !== 0) {
+					let json = JSON.stringify(cases);
+					content = content.replace(firstLineTrimmed, testPrefix + json);
+				}
+				files.write(currentFilename, content);
+				editor.value = content;
+				testUpdateCases();
+				return;
+			}
+		}
+
+		let json = JSON.stringify([_case]);
+		content = testPrefix + json + "\n\n" + content;
+
+		files.write(currentFilename, content);
+		editor.value = content;
+		testUpdateCases();
+	};
+
+	function testRunCaseInternal (content, _case) {
+		testCTM.reset();
+		testCTM.initialize(content, _case.input.split(""));
+		let error;
+
+		let stepCounter = 0;
+		while (!testCTM.isFinished()) {
+			error = testCTM.step();
+			if (error) {
+				break;
+			}
+			stepCounter ++;
+		}
+
+		if (error) {
+			return { type: "error", title: "Test run failed", text: "The reported error was:\n\n" + error };
+		}
+
+		let data = testCTM.tape.getData();
+
+		// Trim #s
+		while (data[0] === "#") {
+			data.splice(0, 1);
+		}
+
+		while (data[data.length - 1] === "#") {
+			data.splice(data.length - 1, 1);
+		}
+
+		if ((_case.type === "substring" && data.join("").indexOf(_case.expectedOutput) !== -1) || (_case.type === "exact" && _case.expectedOutput === data.join(""))) {
+			return { type: "success", title: "Test run succeeded!", text: "The test run succeeded with " + stepCounter + " transitions taken." };
+		} else {
+			return { type: "error", title: "Test run failed!", text: "The test run failed because of an output mismatch." };
+		}
+	};
+
+	function testRunCase (index) {
+		let program = files.read(currentFilename);
+
+		let cases = testGetCases();
+		let _case = cases[index];
+
+		let result = testRunCaseInternal(program, _case);
+
+		swal(result.title, result.text, result.type);
+	};
+
+	function testRunAllCases () {
+		let program = files.read(currentFilename);
+
+		let cases = testGetCases();
+
+		let results = [];
+		let success = 0;
+		let fail = 0;
+		cases.forEach((_case) => {
+			let result = testRunCaseInternal(program, _case);
+			if (result.type === "error") {
+				fail ++;
+			} else if (result.type === "success") {
+				success ++;
+			}
+			results.push(result);
+		});
+
+		let textualResults = results.map((result, index) => "Test " + (index + 1) + " " + (result.type === "success" ? "passed" : "failed") + ". " + result.text).join("\n\n");
+
+		let description = "The results of all tests are summarized below."
+		if (success === 0) {
+			swal("All test runs failed", "All test runs failed. " + description + "\n\n" + textualResults);
+		} else if (fail !== 0) {
+			swal("Some test runs failed", "Some test runs failed. " + description + "\n\n" + textualResults);
+		} else if (fail === 0) {
+			swal("All tests passed!", "All test runs passed! " + description + "\n\n" + textualResults);
+		}
 	};
 
 	// GENERAL functions

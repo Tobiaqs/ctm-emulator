@@ -1,0 +1,25 @@
+.test > .test-fields > input, .test > .test-fields > select, .test > .test-fields > button, .test > .test-fields > div {
+	margin: 8px auto;
+	display: block;
+}
+
+.test > .test-fields.hidden {
+	display: none;
+}
+
+.test > .test-cases > table {
+	display: inline-block;
+}
+
+.test > .test-cases > table td {
+	padding-left: 8px;
+	padding-right: 8px;
+}
+
+.test > .test-cases > table tr:first-child td {
+	font-weight: bold;
+}
+
+.test > .test-btn-run-all.hidden {
+	display: none;
+}

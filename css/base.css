@@ -18,3 +18,14 @@ body {
 .view.visible {
 	display: block;
 }
+
+.hint {
+	width: 20px;
+	height: 20px;
+	cursor: pointer;
+	background-image: url(hint.svg);
+	background-repeat: no-repeat;
+	background-size: 20px 20px;
+	vertical-align: middle;
+	display: inline-block;
+}
