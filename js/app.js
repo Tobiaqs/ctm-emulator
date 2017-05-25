@@ -56,6 +56,7 @@
 	let toolbarBtnEmulator;
 	let toolbarBtnTest;
 	let toolbarBtnValidate;
+	let toolbarBtnHelp;
 
 	// The cTM instance used by the emulator
 
@@ -226,6 +227,7 @@
 		toolbarBtnEmulator = document.getElementsByClassName("toolbar-btn-emulator")[0];
 		toolbarBtnTest = document.getElementsByClassName("toolbar-btn-test")[0];
 		toolbarBtnValidate = document.getElementsByClassName("toolbar-btn-validate")[0];
+		toolbarBtnHelp = document.getElementsByClassName("toolbar-btn-help")[0];
 
 		emulatorInput = document.getElementsByClassName("emulator-input")[0];
 		emulatorError = document.getElementsByClassName("emulator-error")[0];
@@ -274,6 +276,10 @@
 
 		toolbarBtnValidate.addEventListener("click", () => {
 			setActiveView("validate");
+		});
+
+		toolbarBtnHelp.addEventListener("click", () => {
+			setActiveView("help");
 		});
 
 		// Emulator listeners
