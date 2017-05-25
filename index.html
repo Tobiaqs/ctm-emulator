@@ -8,27 +8,33 @@
 	<script src="js/ctm.js" type="text/javascript"></script>
 	<script src="js/app.js" type="text/javascript"></script>
 	<link rel="stylesheet" href="bower_components/sweetalert/dist/sweetalert.css" type="text/css">
-	<link rel="stylesheet" href="css/ctm.css" type="text/css">
+	<link rel="stylesheet" href="css/base.css" type="text/css">
+	<link rel="stylesheet" href="css/toolbar.css" type="text/css">
+	<link rel="stylesheet" href="css/view.editor.css" type="text/css">
+	<link rel="stylesheet" href="css/view.browse.css" type="text/css">
+	<link rel="stylesheet" href="css/view.emulator.css" type="text/css">
 </head>
 <body>
 	<div class="toolbar">
 		<div class="logo">cTM IDE</div>
-		<div class="toolbar-btn toolbar-btn-back hidden">←Editor</div>
 		<div class="toolbar-btn toolbar-btn-icon toolbar-btn-new" title="New program"></div>
 		<div class="toolbar-btn toolbar-btn-icon toolbar-btn-browse" title="Browse programs"></div>
 		<div class="toolbar-btn toolbar-btn-icon toolbar-btn-save" title="Save program"></div>
-		<div class="toolbar-btn toolbar-btn-emulate">Emulate</div>
-		<div class="toolbar-btn toolbar-btn-test">Test cases</div>
-		<div class="toolbar-btn toolbar-btn-validate">Validate</div>
+		<div class="toolbar-btn toolbar-btn-view toolbar-btn-editor">←Editor</div>
+		<div class="toolbar-btn toolbar-btn-view toolbar-btn-emulator">Emulate</div>
+		<div class="toolbar-btn toolbar-btn-view toolbar-btn-test">Test cases</div>
+		<div class="toolbar-btn toolbar-btn-view toolbar-btn-validate">Validate</div>
 	</div>
-	<div class="wrapper wrapper-editor">
+
+	<div class="view view-editor">
 		<textarea class="editor"></textarea>
 	</div>
-	<div class="wrapper wrapper-browse">
+
+	<div class="view view-browse">
 		<div class="browse"></div>
 	</div>
 
-	<div class="wrapper wrapper-emulator">
+	<div class="view view-emulator">
 		<div class="emulator">
 			Input:<br>
 			<input type="text" class="emulator-input"><br>
@@ -36,6 +42,18 @@
 			<div class="emulator-error"></div>
 			<div class="emulator-tape"></div>
 			<div class="emulator-stats"></div>
+		</div>
+	</div>
+
+	<div class="view view-test">
+		<div class="test">
+			
+		</div>
+	</div>
+
+	<div class="view view-validate">
+		<div class="validate">
+			
 		</div>
 	</div>
 </body>

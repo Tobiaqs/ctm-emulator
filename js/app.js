@@ -8,7 +8,7 @@
 	window.cTMIDE = window.cTMIDE || {};
 
 	if (!window.localStorage) {
-		alert("No localStorage support");
+		alert("No localStorage support. This app will not work.");
 		return;
 	}
 
@@ -44,20 +44,22 @@
 
 	// Declare state variables
 	let currentFilename;
-	let activeWrapperName;
+	let activeViewName;
 
 	// Declare DOM element holders
 	let editor;
 	let browse;
-	let toolbarBtnBack;
+	let toolbarBtnEditor;
 	let toolbarBtnNew;
 	let toolbarBtnBrowse;
 	let toolbarBtnSave;
-	let toolbarBtnEmulate;
+	let toolbarBtnEmulator;
 	let toolbarBtnTest;
 	let toolbarBtnValidate;
 
 	// The cTM instance used by the emulator
+
+	// Emulator variables
 	let emulatorCTM = new cTMIDE.cTM;
 	let emulatorSteps;
 	let emulatorInput;
@@ -68,15 +70,15 @@
 	let emulatorBtnRun;
 	let emulatorBtnRestart;
 
-	let wrappers = {
+	let views = {
 		browse: {
 			onEnter: () => {
 				// Create links
-				let links = [];
+				let links = "";
 				files.list().forEach((file) => {
-					links.push("<a href=\"javascript:void(0);\" data-open-file=\"" + file + "\">Load " + file + "</a> (<a href=\"javascript:void(0);\" data-delete-file=\"" + file + "\">delete</a>)");
+					links += "<div class=\"browse-file\"><div class=\"browse-file-title\">" + file + "</div><div class=\"browse-file-controls\"><a href=\"javascript:void(0);\" data-open-file=\"" + file + "\">load</a><a href=\"javascript:void(0);\" data-delete-file=\"" + file + "\">delete</a></div></div>";
 				});
-				browse.innerHTML = links.join("<br>");
+				browse.innerHTML = links;
 
 				if (browse.innerHTML === "") {
 					browse.innerHTML = "No files were found!";
@@ -86,11 +88,11 @@
 				[].forEach.call(browse.getElementsByTagName("A"), (node) => {
 					if (node.attributes["data-open-file"]) {
 						node.addEventListener("click", () => {
-							loadProgram(node.attributes["data-open-file"].value);
+							editorLoadProgram(node.attributes["data-open-file"].value);
 						});
 					} else if (node.attributes["data-delete-file"]) {
 						node.addEventListener("click", () => {
-							removeProgram(node.attributes["data-delete-file"].value);
+							editorRemoveProgram(node.attributes["data-delete-file"].value);
 						});
 					}
 				});
@@ -102,7 +104,7 @@
 
 		emulator: {
 			onEnter: () => {
-				wrappers.emulator.onLeave();
+				views.emulator.onLeave();
 			},
 			onLeave: (leaveInput) => {
 				emulatorCTM.reset();
@@ -125,11 +127,11 @@
 		// Get elements from DOM
 		editor = document.getElementsByClassName("editor")[0];
 		browse = document.getElementsByClassName("browse")[0];
-		toolbarBtnBack = document.getElementsByClassName("toolbar-btn-back")[0];
+		toolbarBtnEditor = document.getElementsByClassName("toolbar-btn-editor")[0];
 		toolbarBtnNew = document.getElementsByClassName("toolbar-btn-new")[0];
 		toolbarBtnBrowse = document.getElementsByClassName("toolbar-btn-browse")[0];
 		toolbarBtnSave = document.getElementsByClassName("toolbar-btn-save")[0];
-		toolbarBtnEmulate = document.getElementsByClassName("toolbar-btn-emulate")[0];
+		toolbarBtnEmulator = document.getElementsByClassName("toolbar-btn-emulator")[0];
 		toolbarBtnTest = document.getElementsByClassName("toolbar-btn-test")[0];
 		toolbarBtnValidate = document.getElementsByClassName("toolbar-btn-validate")[0];
 
@@ -142,10 +144,10 @@
 		emulatorBtnRestart = document.getElementsByClassName("emulator-btn-restart")[0];
 
 		// Bind listeners
-		toolbarBtnNew.addEventListener("click", newProgram);
+		toolbarBtnNew.addEventListener("click", editorNewProgram);
 
 		toolbarBtnBrowse.addEventListener("click", () => {
-			setActiveWrapper("browse");
+			setActiveView("browse");
 		});
 
 		toolbarBtnSave.addEventListener("click", () => {
@@ -153,24 +155,30 @@
 			if (currentFilename) {
 				files.save(currentFilename, editor.value);
 			} else {
-				saveProgramAs();
+				editorSaveProgramAs();
 			}
 		});
 
-		toolbarBtnEmulate.addEventListener("click", () => {
-			setActiveWrapper("emulator");
+		toolbarBtnEmulator.addEventListener("click", () => {
+			setActiveView("emulator");
 		});
 
-		toolbarBtnBack.addEventListener("click", () => {
-			setActiveWrapper("editor");
+		toolbarBtnEditor.addEventListener("click", () => {
+			setActiveView("editor");
 		});
 
-		emulatorInput.addEventListener("keyup", onEmulatorInputChanged);
+		emulatorInput.addEventListener("keyup", emulatorOnInputChanged);
 
 		emulatorBtnStep.addEventListener("click", () => {
 			// If no error, add to the step counter
-			if (emulatorCTM.step()) {
+			let error = emulatorCTM.step();
+			if (!error) {
 				emulatorSteps ++;
+			} else {
+				emulatorError.innerHTML = error;
+
+				emulatorBtnStep.disabled = true;
+				emulatorBtnRun.disabled = true;
 			}
 
 			if (emulatorCTM.isFinished()) {
@@ -178,18 +186,24 @@
 				emulatorBtnRun.disabled = true;
 			}
 
-			updateTapeRepresentation();
-			updateStats();
+			emulatorUpdateTapeRepresentation();
+			emulatorUpdateStats();
 		});
 
 		emulatorBtnRun.addEventListener("click", () => {
 			// Run until finished
 			while (!emulatorCTM.isFinished()) {
 				// Or: until an error occurs
-				if (!emulatorCTM.step()) {
+				let error = emulatorCTM.step()
+				if (!error) {
+					emulatorSteps ++;
+				} else {
+					emulatorError.innerHTML = error;
+
+					emulatorBtnStep.disabled = true;
+					emulatorBtnRun.disabled = true;
 					break;
 				}
-				emulatorSteps ++;
 			}
 
 			if (emulatorCTM.isFinished()) {
@@ -197,38 +211,21 @@
 				emulatorBtnRun.disabled = true;
 			}
 
-			updateTapeRepresentation();
-			updateStats();
+			emulatorUpdateTapeRepresentation();
+			emulatorUpdateStats();
 		});
 
 		emulatorBtnRestart.addEventListener("click", () => {
-			onEmulatorInputChanged();
+			emulatorOnInputChanged();
 		});
 
-		emulatorCTM.on("error", (error) => {
-			emulatorError.innerHTML = error;
-		});
-
-		setActiveWrapper("editor");
+		setActiveView("editor");
 	});
 
-	// Functions
-
-	// Simple handler for the emulator
-	function onEmulatorInputChanged () {
-		// Reset everything but keep input
-		wrappers.emulator.onLeave(true);
-		emulatorCTM.initialize(editor.value, emulatorInput.value.split(""));
-
-		emulatorBtnStep.disabled = false;
-		emulatorBtnRun.disabled = false;
-
-		updateTapeRepresentation();
-		updateStats();
-	};
+	// Functions for EDITOR view
 
 	// Show a popup asking for a filename, then set currentFilename and click save button. 
-	function saveProgramAs () {
+	function editorSaveProgramAs () {
 		swal({
 			title: "Enter a name",
 			text: "Please give your program a name:",
@@ -266,9 +263,9 @@
 	};
 
 	// New button clicked.
-	function newProgram () {
+	function editorNewProgram () {
 		// Two cases in which creating a new file is allowed without confirmation
-		if (isProgramPristine()) {
+		if (editorIsProgramPristine()) {
 			currentFilename = null;
 			editor.value = "";
 			return;
@@ -291,12 +288,12 @@
 	};
 
 	// From browse: load a program
-	function loadProgram (filename) {
+	function editorLoadProgram (filename) {
 		// Two cases in which loading a file is allowed without confirmation
-		if (isProgramPristine()) {
+		if (editorIsProgramPristine()) {
 			currentFilename = filename;
 			editor.value = files.read(filename);
-			setActiveWrapper("editor");
+			setActiveView("editor");
 			return;
 		}
 
@@ -312,13 +309,13 @@
 		}, () => {
 			currentFilename = filename;
 			editor.value = files.read(filename);
-			setActiveWrapper("editor");
+			setActiveView("editor");
 			swal.close();
 		});
 	};
 
 	// From browse: remove a program
-	function removeProgram (filename) {
+	function editorRemoveProgram (filename) {
 		// Ask the user if they are sure
 		swal({
 			title: "Are you sure?",
@@ -341,59 +338,39 @@
 			swal.close();
 
 			// Update list
-			wrappers.browse.onEnter();
+			views.browse.onEnter();
 		});
 	};
 
 	// Is current file saved or does not need to be saved
-	function isProgramPristine () {
+	function editorIsProgramPristine () {
 		return (currentFilename && files.exists(currentFilename) && files.read(currentFilename) === editor.value) || (!currentFilename && editor.value.length === 0);
-	}
+	};
 
-	function setActiveWrapper (wrapperName) {
-		// Don't do anything if not required
-		if (wrapperName === activeWrapperName) {
-			return;
-		}
+	// Functions for EMULATOR view
 
-		// Run onLeave listener
-		if (activeWrapperName && wrappers[activeWrapperName]) {
-			wrappers[activeWrapperName].onLeave();
-		}
+	// Simple handler for the emulator
+	function emulatorOnInputChanged () {
+		// Reset everything but keep input
+		views.emulator.onLeave(true);
 
-		let wrapperNodes = document.getElementsByClassName("wrapper");
-		[].forEach.call(wrapperNodes, (wrapperNode) => {
-			if (wrapperNode.classList.contains("wrapper-" + wrapperName)) {
-				wrapperNode.classList.add("visible");
-			} else {
-				wrapperNode.classList.remove("visible");
-			}
-		});
+		let errors = emulatorCTM.initialize(editor.value, emulatorInput.value.split(""));
 
-		activeWrapperName = wrapperName;
-
-		if (wrapperName !== "editor") {
-			// Show back, hide file manipulation buttons
-			toolbarBtnBack.classList.remove("hidden");
-			toolbarBtnNew.classList.add("hidden");
-			toolbarBtnBrowse.classList.add("hidden");
-			toolbarBtnSave.classList.add("hidden");
+		if (errors) {
+			emulatorError.innerHTML = errors.join("<br>");
+			emulatorBtnStep.disabled = true;
+			emulatorBtnRun.disabled = true;
 		} else {
-			// Hide back, show file manipulation buttons
-			toolbarBtnBack.classList.add("hidden");
-			toolbarBtnNew.classList.remove("hidden");
-			toolbarBtnBrowse.classList.remove("hidden");
-			toolbarBtnSave.classList.remove("hidden");
-		}
+			emulatorBtnStep.disabled = false;
+			emulatorBtnRun.disabled = false;
 
-		// Run onEnter listener
-		if (wrappers[wrapperName]) {
-			wrappers[wrapperName].onEnter();
+			emulatorUpdateTapeRepresentation();
+			emulatorUpdateStats();
 		}
 	};
 
 	// In emulator: update the representation of the tape
-	function updateTapeRepresentation () {
+	function emulatorUpdateTapeRepresentation () {
 		let data = emulatorCTM.tape.getData();
 		let position = emulatorCTM.tape.getPosition();
 		let blank = "<div class=\"emulator-tape-element\">#</div>";
@@ -442,8 +419,59 @@
 	};
 
 	// In emulator: update statistics
-	function updateStats () {
-		emulatorStats.innerHTML = "Steps: " + emulatorSteps + "<br>" +
-			"State: " + emulatorCTM.state;
+	function emulatorUpdateStats () {
+		emulatorStats.innerHTML = "Transitions taken: " + emulatorSteps + "<br>" +
+			"Current state: " + emulatorCTM.state;
+	};
+
+	// GENERAL functions
+
+	function setActiveView (viewName) {
+		// Don't do anything if not required
+		if (viewName === activeViewName) {
+			return;
+		}
+
+		// Run onLeave listener
+		if (activeViewName && views[activeViewName]) {
+			views[activeViewName].onLeave();
+		}
+
+		activeViewName = viewName;
+
+		let viewNodes = document.getElementsByClassName("view");
+		[].forEach.call(viewNodes, (viewNode) => {
+			if (viewNode.classList.contains("view-" + activeViewName)) {
+				viewNode.classList.add("visible");
+			} else {
+				viewNode.classList.remove("visible");
+			}
+		});
+
+		let viewBtnNodes = document.getElementsByClassName("toolbar-btn-view");
+
+		[].forEach.call(viewBtnNodes, (viewBtnNode) => {
+			if (viewBtnNode.classList.contains("toolbar-btn-" + activeViewName)) {
+				viewBtnNode.classList.remove("visible");
+			} else {
+				viewBtnNode.classList.add("visible");
+			}
+		});
+
+		// Hide file manipulation buttons when not in the editor state
+		let iconBtnNodes = document.getElementsByClassName("toolbar-btn-icon");
+
+		[].forEach.call(iconBtnNodes, (iconBtnNode) => {
+			if (activeViewName === "editor") {
+				iconBtnNode.classList.remove("hidden");
+			} else {
+				iconBtnNode.classList.add("hidden");
+			}
+		});
+
+		// Run onEnter listener
+		if (views[viewName]) {
+			views[viewName].onEnter();
+		}
 	};
 })();

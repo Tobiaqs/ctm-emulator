@@ -1,0 +1,20 @@
+html, body {
+	height: 100%;
+	width: 100%;
+	margin: 0;
+	padding: 0;
+}
+
+body {
+	font-family: "CMU Typewriter Text Variable Width", sans-serif;
+}
+
+.view {
+	text-align: center;
+	height: 80%;
+	display: none;
+}
+
+.view.visible {
+	display: block;
+}

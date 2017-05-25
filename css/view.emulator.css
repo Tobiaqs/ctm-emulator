@@ -1,0 +1,21 @@
+.emulator > .emulator-tape, .emulator > .emulator-input, .emulator > .emulator-error {
+	margin-top: 8px;
+	margin-bottom: 8px;
+}
+
+.emulator > .emulator-tape {
+	height: 40px;
+}
+
+.emulator > .emulator-tape > .emulator-tape-element {
+	width: 36px;
+	height: 36px;
+	margin-top: 2px;
+	display: inline-block;
+	line-height: 36px;
+}
+
+.emulator > .emulator-tape > .emulator-tape-element.selected {
+	border: 2px solid black;
+	margin-top: 0;
+}

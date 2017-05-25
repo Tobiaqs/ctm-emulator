@@ -91,6 +91,7 @@
 	 * #initialize()
 	 * param program: the program in ctm language
 	 * param data: the data in an array. elements should be strings
+	 * returns: array of errors, or undefined
 	 */
 	cTM.prototype.initialize = function (program, data) {
 		// Initialize transitions array
@@ -99,8 +100,10 @@
 		// States associative array, used to find initial and final states
 		let states = {};
 
+		let errors = [];
+
 		// Iterate over program lines
-		let errorOccurred = program.split("\n").some((line) => {
+		program.split("\n").forEach((line) => {
 			line = line.trim();
 
 			// If the length or the index of "%%" === 0..
@@ -121,8 +124,7 @@
 			}
 
 			if (transition.direction !== "L" && transition.direction !== "R") {
-				this._emit("error", "Direction " + transition.direction + " was given, L or R expected.");
-				return true;
+				errors.push("Direction " + transition.direction + " was given, L or R expected.");
 			}
 
 			// Add the from state to the state array if it doesn't exist yet
@@ -149,11 +151,6 @@
 			this.transitions.push(transition);
 		});
 
-		if (errorOccurred) {
-			this.reset();
-			return;
-		}
-
 		// Keep initial and final state names in these arrays
 		let initialStates = [];
 		let finalStates = [];
@@ -168,17 +165,21 @@
 		}
 
 		// More than one initial state?
-		if (initialStates.length !== 1) {
-			this._emit("error", initialStates.length + " initial states found. 1 expected.");
-			this.reset();
-			return;
+		if (initialStates.length !== 1 || finalStates.length !== 1) {
+			if (initialStates.length !== 1) {
+				errors.push(initialStates.length + " initial states found. 1 expected.");
+			}
+
+			if (finalStates.length !== 1) {
+				errors.push(finalStates.length + " final states found. 1 expected.");
+			}
 		}
 
-		// More than one final state?
-		if (finalStates.length !== 1) {
-			this._emit("error", finalStates.length + " final states found. 1 expected.");
+		// Report errors
+		if (errors.length !== 0) {
 			this.reset();
-			return;
+
+			return errors;
 		}
 
 		// Set initial and final states
@@ -190,14 +191,11 @@
 
 		// Create a Tape using the data
 		this.tape = new Tape(data);
-
-		// Trigger the initialized event
-		this._emit("initialized");
 	};
 
 	/**
 	 * #step()
-	 * returns: true if no error, false if error
+	 * returns: string describing error if error, otherwise undefined
 	 */
 	cTM.prototype.step = function () {
 		let transition = this.transitions.find((transition) => (transition.fromState === this.state && transition.input === this.tape.read()));
@@ -212,13 +210,9 @@
 			}
 
 			this.state = transition.toState;
-			return true;
 		} else if (this.state !== this.finalState) {
-			this._emit("error", "No more transitions, but not in final state!");
-			return false;
+			return "No more transitions, but not in final state!";
 		}
-
-		return true;
 	};
 
 	/**

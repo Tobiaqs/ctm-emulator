@@ -1,0 +1,26 @@
+.browse {
+	text-align: center;
+	width: 100%;
+}
+
+.browse > .browse-file {
+	margin: 8px;
+	width: 100%;
+	max-width: 150px;
+	display: inline-block;
+	border: 2px solid black;
+}
+
+.browse > .browse-file > .browse-file-title {
+	text-align: center;
+}
+
+.browse > .browse-file > .browse-file-controls {
+	margin-top: 1em;
+}
+
+.browse > .browse-file > .browse-file-controls > a {
+	display: inline-block;
+	width: 50%;
+	text-align: center;
+}
