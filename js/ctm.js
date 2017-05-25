@@ -167,6 +167,17 @@
 			allStates.push(state);
 		}
 
+		// Set initial and final states
+		this.initialState = initialStates[0] || allStates.sort()[0];
+		this.finalState = finalStates[0];
+
+		// Set the current state to the initial state
+		this.state = this.initialState;
+
+		if (!this.initialState) {
+			errors.push("No initial state could be determined.");
+		}
+
 		// More than one initial states? Or 0 or more than 1 final states?
 		if (initialStates.length > 1 || finalStates.length !== 1) {
 			if (initialStates.length > 1) {
@@ -178,19 +189,11 @@
 			}
 		}
 
-		// Set initial and final states
-		this.initialState = initialStates[0] || allStates.sort()[0];
-		this.finalState = finalStates[0];
-
-		// Set the current state to the initial state
-		this.state = this.initialState;
-
 		// Create a Tape using the data
 		this.tape = new Tape(data);
 
 		// Report errors
 		if (errors.length !== 0) {
-
 			if (!doNotResetOnErrors) {
 				this.reset();
 			}
