@@ -155,6 +155,7 @@
 		// Keep initial and final state names in these arrays
 		let initialStates = [];
 		let finalStates = [];
+		let allStates = [];
 
 		for (let state in states) {
 			if (states[state].initial) {
@@ -163,6 +164,7 @@
 			if (states[state].final) {
 				finalStates.push(state);
 			}
+			allStates.push(state);
 		}
 
 		// More than one initial states? Or 0 or more than 1 final states?
@@ -177,7 +179,7 @@
 		}
 
 		// Set initial and final states
-		this.initialState = initialStates.sort()[0];
+		this.initialState = initialStates[0] || allStates.sort()[0];
 		this.finalState = finalStates[0];
 
 		// Set the current state to the initial state
