@@ -1,0 +1,81 @@
+html, body {
+	height: 100%;
+	width: 100%;
+	margin: 0;
+	padding: 0;
+}
+
+.toolbar {
+	min-height: 40px;
+	text-align: center;
+}
+
+.toolbar > div {
+	display: inline-block;
+	height: 40px;
+	line-height: 40px;
+	font-family: "CMU Typewriter Text", sans-serif;
+	font-size: 40px;
+	vertical-align: top;
+}
+
+.toolbar > div:not(:first-child) {
+	margin-left: 16px;
+}
+
+.toolbar > .toolbar-btn {
+	font-size: 22.5px;
+	cursor: pointer;
+}
+
+.toolbar > .toolbar-btn.hidden {
+	display: none;
+}
+
+.toolbar > .toolbar-btn.toolbar-btn-back {
+	font-size: 27.5px;
+}
+
+.toolbar > .toolbar-btn:hover {
+	text-decoration: underline;
+}
+
+.wrapper {
+	text-align: center;
+	height: 80%;
+	display: none;
+}
+
+.wrapper.visible {
+	display: block;
+}
+
+.editor {
+	width: 1000px;
+	max-width: 95%;
+	height: 100%;
+	font-size: 16px;
+}
+
+.browser {
+	text-align: left;
+}
+
+.emulator > .emulator-tape {
+	margin-top: 8px;
+	margin-bottom: 8px;
+	height: 40px;
+}
+
+.emulator > .emulator-tape > .emulator-tape-element {
+	width: 36px;
+	height: 36px;
+	margin-top: 2px;
+	display: inline-block;
+	line-height: 36px;
+}
+
+.emulator > .emulator-tape > .emulator-tape-element.selected {
+	border: 2px solid black;
+	margin-top: 0;
+}

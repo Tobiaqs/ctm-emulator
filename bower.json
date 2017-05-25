@@ -1,0 +1,14 @@
+{
+  "name": "ctm",
+  "authors": [
+    "Tobias Sijtsma <tobias@tobiass.nl>"
+  ],
+  "description": "",
+  "main": "",
+  "license": "MIT",
+  "homepage": "",
+  "private": true,
+  "dependencies": {
+    "sweetalert": "^1.1.3"
+  }
+}
