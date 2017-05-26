@@ -217,8 +217,8 @@
 					messages.push("Number of transitions: " + validateCTM.transitions.length + ".");
 					messages.push("Initial state: " + validateCTM.initialState + ".");
 					messages.push("Final states: " + validateCTM.finalStates.slice(0).sort().join(", ") + ".");
-					messages.push("Lines of code / comment: " + codeLines + " / " + commentLines + ".");
-					messages.push("Code/comment ratio: 1 : " + (Math.round(codeLines / commentLines * 100) / 100) + ".");
+					messages.push("Lines of comment / code: " + commentLines + " / " + codeLines + ".");
+					messages.push("Comment / code ratio: 1 : " + (Math.round(codeLines / commentLines * 100) / 100) + ".");
 
 					validate.innerHTML += "<div>Facts about your program:</div><div>" + messages.join("<br>") + "</div>";
 				} else {
