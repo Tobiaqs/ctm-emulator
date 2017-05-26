@@ -202,11 +202,7 @@
 					messages.push("Initial state: " + validateCTM.initialState + ".");
 					messages.push("Final states: " + validateCTM.finalStates.slice(0).sort().join(", ") + ".");
 
-					if (validateCTM.transitions.length % alphabet.length !== 0) {
-						messages.push("Number of transitions is not divisible by the length of the alphabet.");
-					}
-
-					validate.innerHTML += "<div>The following information was acquired:</div><div>" + messages.join("<br>") + "</div>";
+					validate.innerHTML += "<div>Facts about your program:</div><div>" + messages.join("<br>") + "</div>";
 				} else {
 					validate.innerHTML += "<div>No transitions were found.</div>";
 				}
