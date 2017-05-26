@@ -48,20 +48,38 @@
 		// shift position if necessary
 		if (this.isPositionOnTape()) {
 			this._data[this._position] = value;
-		} else if (this._position < 0) {
-			for (let i = 0; i < -this._position; i ++) {
-				this._data.unshift("#");
-			}
+		} else if (value !== "#") {
+			if (this._position < 0) {
+				for (let i = 0; i < -this._position; i ++) {
+					this._data.unshift("#");
+				}
 
-			this._position = 0;
-			this._data[this._position] = value;
-		} else if (this._position >= this._data.length) {
-			for (let i = 0; i < this._position - this._data.length + 1; i ++) {
-				this._data.push("#");
-			}
+				this._position = 0;
+				this._data[this._position] = value;
+			} else if (this._position >= this._data.length) {
+				for (let i = 0; i < this._position - this._data.length + 1; i ++) {
+					this._data.push("#");
+				}
 
-			this._data[this._position] = value;
+				this._data[this._position] = value;
+			}
 		}
+	};
+
+	/**
+	 * #trim()
+	 */
+	Tape.prototype.trim = function () {
+		console.log("trimming", this._data);
+		while (this._data[0] === "#") {
+			this._data.splice(0, 1);
+			this._position --;
+		}
+
+		while (this._data[this._data.length - 1] === "#") {
+			this._data.splice(this._data.length - 1, 1);
+		}
+		console.log("trimmed", this._data);
 	};
 
 	/**
@@ -212,6 +230,8 @@
 			}
 
 			this.state = transition.toState;
+
+			this.tape.trim();
 		} else if (this.finalStates.indexOf(this.state) === -1) {
 			return "No more transitions, but not in a final state!";
 		}

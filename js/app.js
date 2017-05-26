@@ -741,15 +741,6 @@
 
 		let data = testCTM.tape.getData();
 
-		// Trim #s
-		while (data[0] === "#") {
-			data.splice(0, 1);
-		}
-
-		while (data[data.length - 1] === "#") {
-			data.splice(data.length - 1, 1);
-		}
-
 		if ((_case.type === "substring" && data.join("").indexOf(_case.expectedOutput) !== -1) || (_case.type === "exact" && _case.expectedOutput === data.join(""))) {
 			return { type: "success", title: "Test run succeeded!", text: "The test run succeeded with " + stepCounter + " transitions taken." };
 		} else {
