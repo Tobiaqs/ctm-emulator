@@ -88,7 +88,7 @@
 	let hints = {
 		testType: {
 			title: "Test type",
-			text: "When set to Exact match, the test will run successfully iff the tape contains only the expected output.\n\n" +
+			text: "When set to Exact match, the test will run successfully iff the tape contains only the expected output. Reading starts at the tape head's position upon termination.\n\n" +
 				"When set to Substring, the test will run successfully iff the expected output is a substring of the tape."
 		}
 	};
@@ -741,11 +741,32 @@
 
 		let data = testCTM.tape.getData();
 
-		if ((_case.type === "substring" && data.join("").indexOf(_case.expectedOutput) !== -1) || (_case.type === "exact" && _case.expectedOutput === data.join(""))) {
+		if ((_case.type === "substring" && testSubstring(data, _case.expectedOutput)) || (_case.type === "exact" && testExact(data, _case.expectedOutput, testCTM.tape.getPosition()))) {
 			return { type: "success", title: "Test run succeeded!", text: "The test run succeeded with " + stepCounter + " transitions taken." };
 		} else {
 			return { type: "error", title: "Test run failed!", text: "The test run failed because of an output mismatch." };
 		}
+	};
+
+	function testSubstring (data, expectedOutput) {
+		return data.join("").indexOf(_case.expectedOutput) !== -1;
+	};
+
+	function testExact (data, expectedOutput, position) {
+		// Clone data array
+		data = data.slice(0);
+		if (position < 0) {
+			for (let i = 0; i < -position; i ++) {
+				data.unshift("#");
+			}
+			position = 0;
+		} else if (position >= data.length) {
+			for (let i = 0; i < position - data.length + 1; i ++) {
+				data.push("#");
+			}
+		}
+
+		return data.slice(position).join("") === expectedOutput;
 	};
 
 	function testRunCase (index) {

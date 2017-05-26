@@ -70,7 +70,6 @@
 	 * #trim()
 	 */
 	Tape.prototype.trim = function () {
-		console.log("trimming", this._data);
 		while (this._data[0] === "#") {
 			this._data.splice(0, 1);
 			this._position --;
@@ -79,7 +78,6 @@
 		while (this._data[this._data.length - 1] === "#") {
 			this._data.splice(this._data.length - 1, 1);
 		}
-		console.log("trimmed", this._data);
 	};
 
 	/**
