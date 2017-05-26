@@ -196,7 +196,7 @@
 						}
 					});
 
-					messages.push("The alphabet consists of " + alphabet.join(", ") + ".");
+					messages.push("The alphabet consists of " + alphabet.sort().join(", ") + ".");
 					messages.push("The number of transitions is " + validateCTM.transitions.length + ".");
 					messages.push("The initial state is " + validateCTM.initialState + ".");
 					messages.push("The final state is " + validateCTM.finalState + ".");
@@ -339,14 +339,10 @@
 		// Test listeners
 
 		testBtnAdd.addEventListener("click", () => {
-			if (testInput.value.trim().length !== 0 && testExpectedOutput.value.trim().length !== 0) {
-				testAddCase(testInput.value.trim(), testExpectedOutput.value.trim(), testType.value);
-				testInput.value = "";
-				testExpectedOutput.value = "";
-				testType.value = testType.children[0].value;
-			} else {
-				swal("Validation error", "Please enter an input and an expected output.", "error");
-			}
+			testAddCase(testInput.value, testExpectedOutput.value, testType.value);
+			testInput.value = "";
+			testExpectedOutput.value = "";
+			testType.value = testType.children[0].value;
 		});
 
 		testBtnRunAll.addEventListener("click", () => {
