@@ -169,7 +169,7 @@
 
 		// Set initial and final states
 		this.initialState = initialStates[0] || allStates.sort()[0];
-		this.finalState = finalStates[0];
+		this.finalStates = finalStates;
 
 		// Set the current state to the initial state
 		this.state = this.initialState;
@@ -178,15 +178,8 @@
 			errors.push("No initial state could be determined.");
 		}
 
-		// More than one initial states? Or 0 or more than 1 final states?
-		if (initialStates.length > 1 || finalStates.length !== 1) {
-			if (initialStates.length > 1) {
-				errors.push(initialStates.length + " initial states found. 1 expected.");
-			}
-
-			if (finalStates.length !== 1) {
-				errors.push(finalStates.length + " final states found. 1 expected.");
-			}
+		if (this.finalStates.length === 0) {
+			errors.push("No final states could be determined.");
 		}
 
 		// Create a Tape using the data
@@ -219,8 +212,8 @@
 			}
 
 			this.state = transition.toState;
-		} else if (this.state !== this.finalState) {
-			return "No more transitions, but not in final state!";
+		} else if (this.finalStates.indexOf(this.state) !== -1) {
+			return "No more transitions, but not in a final state!";
 		}
 	};
 
@@ -229,7 +222,7 @@
 	 * returns: cTM in the final state: true. otherwise false
 	 */
 	cTM.prototype.isFinished = function () {
-		return this.state === this.finalState;
+		return this.finalStates.indexOf(this.state) !== -1;
 	};
 
 	/**
@@ -238,7 +231,7 @@
 	cTM.prototype.reset = function () {
 		delete this.transitions;
 		delete this.initialState;
-		delete this.finalState;
+		delete this.finalStates;
 		delete this.state;
 		delete this.tape;
 	};

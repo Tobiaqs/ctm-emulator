@@ -196,16 +196,16 @@
 						}
 					});
 
-					messages.push("The alphabet consists of " + alphabet.sort().join(", ") + ".");
-					messages.push("The number of transitions is " + validateCTM.transitions.length + ".");
-					messages.push("The initial state is " + validateCTM.initialState + ".");
-					messages.push("The final state is " + validateCTM.finalState + ".");
+					messages.push("Alphabet: " + alphabet.sort().join(", ") + ".");
+					messages.push("Number of transitions: " + validateCTM.transitions.length + ".");
+					messages.push("Initial state: " + validateCTM.initialState + ".");
+					messages.push("Final states: " + validateCTM.finalStates.slice(0).sort().join(", ") + ".");
 
 					if (validateCTM.transitions.length % alphabet.length !== 0) {
-						messages.push("<b>WARNING</b>: The number of transitions is not divisible by the length of the alphabet!");
+						messages.push("Number of transitions is not divisible by the length of the alphabet.");
 					}
 
-					validate.innerHTML += "<div>" + messages.join("<br>") + "</div>";
+					validate.innerHTML += "<div>The following information was acquired:</div><div>" + messages.join("<br>") + "</div>";
 				} else {
 					validate.innerHTML += "<div>No transitions were found.</div>";
 				}
@@ -247,7 +247,24 @@
 
 		validate = document.getElementsByClassName("validate")[0];
 
+		// Auto load file
+		editor.value = "";
+
+		if (location.hash && location.hash.length > 1 && files.exists(location.hash.substr(1))) {
+			let filename = location.hash.substr(1);
+			editor.value = files.read(filename);
+			currentFilename = filename;
+		}
+
 		// Bind listeners
+		window.addEventListener("beforeunload", (e) => {
+
+			if (!editorIsProgramPristine()) {
+				e.returnValue = "Are you sure you want to close this tab? There may be unsaved changes!";
+				return e.returnValue;
+			}
+		});
+
 		toolbarBtnNew.addEventListener("click", editorNewProgram);
 
 		toolbarBtnBrowse.addEventListener("click", () => {
@@ -432,6 +449,7 @@
 		if (editorIsProgramPristine()) {
 			currentFilename = filename;
 			editor.value = files.read(filename);
+			location.hash = "#" + filename;
 			setActiveView("editor");
 			return;
 		}
@@ -448,6 +466,7 @@
 		}, () => {
 			currentFilename = filename;
 			editor.value = files.read(filename);
+			location.hash = "#" + filename;
 			setActiveView("editor");
 			swal.close();
 		});
@@ -681,7 +700,12 @@
 
 	function testRunCaseInternal (content, _case) {
 		testCTM.reset();
-		testCTM.initialize(content, _case.input.split(""));
+		let errors = testCTM.initialize(content, _case.input.split(""));
+
+		if (errors) {
+			return { "type": "error", title: "Test run failed", text: "Critical error(s) detected:\n\n" + errors.join("\n") };
+		}
+
 		let error;
 
 		let stepCounter = 0;
