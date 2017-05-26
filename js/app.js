@@ -98,7 +98,7 @@
 			onEnter: () => {
 				// Create links
 				let links = "";
-				files.list().forEach((file) => {
+				files.list().sort().forEach((file) => {
 					links += "<div class=\"browse-file\"><div class=\"browse-file-title\">" + file + "</div><div class=\"browse-file-controls\"><a href=\"javascript:void(0);\" data-open-file=\"" + file + "\">load</a><a href=\"javascript:void(0);\" data-delete-file=\"" + file + "\">delete</a></div></div>";
 				});
 				browse.innerHTML = links;
