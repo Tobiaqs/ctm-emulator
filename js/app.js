@@ -818,11 +818,11 @@
 
 		let description = "The results of all tests are summarized below."
 		if (success === 0) {
-			swal("All test runs failed", "All test runs failed. " + description + "\n\n" + textualResults);
+			swal("All test runs failed", "All test runs failed. " + description + "\n\n" + textualResults, "error");
 		} else if (fail !== 0) {
-			swal("Some test runs failed", "Some test runs failed. " + description + "\n\n" + textualResults);
+			swal("Some test runs failed", "Some test runs failed. " + description + "\n\n" + textualResults, "warning");
 		} else if (fail === 0) {
-			swal("All tests passed!", "All test runs passed! " + description + "\n\n" + textualResults);
+			swal("All tests passed!", "All test runs passed! " + description + "\n\n" + textualResults, "success");
 		}
 	};
 
