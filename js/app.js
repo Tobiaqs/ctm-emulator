@@ -252,7 +252,7 @@
 			editor.value = files.read(filename);
 			currentFilename = filename;
 		} else {
-			history.replaceState(null, null, location.pathname + location.search);
+			history.replaceState(null, document.title, location.pathname + location.search);
 		}
 
 		// Bind listeners
@@ -456,7 +456,7 @@
 		if (editorIsProgramPristine()) {
 			currentFilename = filename;
 			editor.value = files.read(filename);
-			history.replaceState(null, null, location.pathname + location.search + "#" + filename);
+			history.replaceState(null, document.title, location.pathname + location.search + "#" + filename);
 			setActiveView("editor");
 			return;
 		}
@@ -473,7 +473,7 @@
 		}, () => {
 			currentFilename = filename;
 			editor.value = files.read(filename);
-			history.replaceState(null, null, location.pathname + location.search + "#" + filename);
+			history.replaceState(null, document.title, location.pathname + location.search + "#" + filename);
 			setActiveView("editor");
 			swal.close();
 		});
