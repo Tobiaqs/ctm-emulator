@@ -251,6 +251,8 @@
 			let filename = location.hash.substr(1);
 			editor.value = files.read(filename);
 			currentFilename = filename;
+		} else {
+			history.replaceState(null, null, location.pathname + location.search);
 		}
 
 		// Bind listeners
@@ -336,8 +338,8 @@
 					break;
 				}
 
-				if (emulatorSteps >= 10000) {
-					emulatorError.innerHTML = "No final state reached after 10000 transitions. Aborting.";
+				if (emulatorSteps >= 100000) {
+					emulatorError.innerHTML = "No final state reached after 100000 transitions. Aborting.";
 
 					emulatorBtnStep.disabled = true;
 					emulatorBtnRun.disabled = true;
@@ -454,7 +456,7 @@
 		if (editorIsProgramPristine()) {
 			currentFilename = filename;
 			editor.value = files.read(filename);
-			location.hash = "#" + filename;
+			history.replaceState(null, null, location.pathname + location.search + "#" + filename);
 			setActiveView("editor");
 			return;
 		}
@@ -471,7 +473,7 @@
 		}, () => {
 			currentFilename = filename;
 			editor.value = files.read(filename);
-			location.hash = "#" + filename;
+			history.replaceState(null, null, location.pathname + location.search + "#" + filename);
 			setActiveView("editor");
 			swal.close();
 		});
@@ -541,7 +543,7 @@
 		let centerHTML = "";
 
 		data.forEach((element, index) => {
-			centerHTML += "<div class=\"emulator-tape-element" + (index === position ? " selected" : "") + "\">" + element + "</div>";
+			centerHTML += "<div class=\"emulator-tape-element" + (index === position ? " selected" : "") + "\">" + element.split(" ").join("&nbsp;") + "</div>";
 		});
 
 		emulatorTape.innerHTML = "";
@@ -725,8 +727,8 @@
 			}
 			stepCounter ++;
 
-			if (stepCounter >= 10000) {
-				error = "No final state reached after 10000 transitions. Aborting.";
+			if (stepCounter >= 100000) {
+				error = "No final state reached after 100000 transitions. Aborting.";
 				break;
 			}
 		}
