@@ -127,7 +127,8 @@
 
 		emulator: {
 			onEnter: () => {
-				views.emulator.onLeave();
+				emulatorInput.value = "";
+				emulatorOnInputChanged();
 			},
 			// This method is kind of being abused by other methods
 			// that shouldn't be touching it. Oh well =)
