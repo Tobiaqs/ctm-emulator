@@ -135,10 +135,10 @@
 			let transition = {
 				fromState: split[0],
 				toState: split[2],
-				input: split[1][0],
-				output: split[1][2],
-				direction: split[1][4]
-			}
+				input: split[1] ? split[1][0] : undefined,
+				output: split[1] ? split[1][2] : undefined,
+				direction: split[1] ? split[1][4] : undefined
+			};
 
 			if (transition.direction !== "L" && transition.direction !== "R") {
 				errors.push("Direction " + transition.direction + " was given, L or R expected.");

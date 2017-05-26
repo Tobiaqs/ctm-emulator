@@ -188,6 +188,22 @@
 					let messages = [];
 					let alphabet = [];
 
+					let codeLines = 0;
+					let commentLines = 0;
+					editor.value.split("\n").forEach((line) => {
+						line = line.trim();
+
+						if (line.length === 0) {
+							return;
+						}
+
+						if (line.indexOf("%%") !== 0) {
+							codeLines ++;
+						} else if (line.indexOf(testPrefix) !== 0) {
+							commentLines ++;
+						}
+					});
+
 					validateCTM.transitions.forEach((transition) => {
 						if (alphabet.indexOf(transition.input) === -1 && transition.input !== "#") {
 							alphabet.push(transition.input);
@@ -201,6 +217,8 @@
 					messages.push("Number of transitions: " + validateCTM.transitions.length + ".");
 					messages.push("Initial state: " + validateCTM.initialState + ".");
 					messages.push("Final states: " + validateCTM.finalStates.slice(0).sort().join(", ") + ".");
+					messages.push("Lines of code / comment: " + codeLines + " / " + commentLines + ".");
+					messages.push("Code/comment ratio: 1 : " + (Math.round(codeLines / commentLines * 100) / 100) + ".");
 
 					validate.innerHTML += "<div>Facts about your program:</div><div>" + messages.join("<br>") + "</div>";
 				} else {
