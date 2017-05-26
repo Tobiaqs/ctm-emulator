@@ -328,11 +328,19 @@
 			// Run until finished
 			while (!emulatorCTM.isFinished()) {
 				// Or: until an error occurs
-				let error = emulatorCTM.step()
+				let error = emulatorCTM.step();
 				if (!error) {
 					emulatorSteps ++;
 				} else {
 					emulatorError.innerHTML = error;
+
+					emulatorBtnStep.disabled = true;
+					emulatorBtnRun.disabled = true;
+					break;
+				}
+
+				if (emulatorSteps >= 10000) {
+					emulatorError.innerHTML = "No final state reached after 10000 transitions. Aborting.";
 
 					emulatorBtnStep.disabled = true;
 					emulatorBtnRun.disabled = true;
@@ -578,7 +586,11 @@
 
 	// In emulator: update statistics
 	function emulatorUpdateStats () {
-		emulatorStats.innerHTML = "Transitions taken: " + emulatorSteps + "<br>" +
+		emulatorStats.innerHTML = "";
+		if (emulatorCTM.isFinished()) {
+			emulatorStats.innerHTML += "<b>Finished</b><br><br>";
+		}
+		emulatorStats.innerHTML += "Transitions taken: " + emulatorSteps + "<br>" +
 			"Current state: " + emulatorCTM.state;
 	};
 
@@ -715,6 +727,11 @@
 				break;
 			}
 			stepCounter ++;
+
+			if (stepCounter >= 10000) {
+				error = "No final state reached after 10000 transitions. Aborting.";
+				break;
+			}
 		}
 
 		if (error) {

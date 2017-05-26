@@ -212,7 +212,7 @@
 			}
 
 			this.state = transition.toState;
-		} else if (this.finalStates.indexOf(this.state) !== -1) {
+		} else if (this.finalStates.indexOf(this.state) === -1) {
 			return "No more transitions, but not in a final state!";
 		}
 	};
