@@ -196,10 +196,6 @@
 			errors.push("No initial state could be determined.");
 		}
 
-		if (this.finalStates.length === 0) {
-			errors.push("No final states could be determined.");
-		}
-
 		// Create a Tape using the data
 		this.tape = new Tape(data);
 
@@ -232,8 +228,6 @@
 			this.state = transition.toState;
 
 			this.tape.trim();
-		} else if (this.finalStates.indexOf(this.state) === -1) {
-			return "No more transitions, but not in a final state!";
 		}
 	};
 
@@ -242,7 +236,8 @@
 	 * returns: cTM in the final state: true. otherwise false
 	 */
 	cTM.prototype.isFinished = function () {
-		return this.finalStates.indexOf(this.state) !== -1;
+		let transition = this.transitions.find((transition) => (transition.fromState === this.state && transition.input === this.tape.read()));
+		return !transition;
 	};
 
 	/**
