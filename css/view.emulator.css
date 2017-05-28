@@ -19,3 +19,7 @@
 	border: 2px solid black;
 	margin-top: 0;
 }
+
+.emulator > .emulator-vis {
+	height: 600px;
+}

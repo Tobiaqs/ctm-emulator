@@ -170,22 +170,24 @@
 
 		// Keep initial and final state names in these arrays
 		let initialStates = [];
-		let finalStates = [];
-		let allStates = [];
+		this.finalStates = [];
+		this.states = [];
 
 		for (let state in states) {
 			if (states[state].initial) {
 				initialStates.push(state);
 			}
 			if (states[state].final) {
-				finalStates.push(state);
+				this.finalStates.push(state);
 			}
-			allStates.push(state);
+			this.states.push(state);
 		}
 
+		// Sort the states so that this.states[0] represents the alphabetically first state.
+		this.states.sort();
+
 		// Set initial and final states
-		this.initialState = initialStates[0] || allStates.sort()[0];
-		this.finalStates = finalStates;
+		this.initialState = initialStates[0] || this.states[0];
 
 		// Set the current state to the initial state
 		this.state = this.initialState;
@@ -193,6 +195,20 @@
 		if (!this.initialState) {
 			errors.push("No initial state could be determined.");
 		}
+
+		this.alphabet = [];
+
+		this.transitions.forEach((transition) => {
+			if (this.alphabet.indexOf(transition.input) === -1 && transition.input !== "#") {
+				this.alphabet.push(transition.input);
+			}
+			if (this.alphabet.indexOf(transition.output) === -1 && transition.output !== "#") {
+				this.alphabet.push(transition.output);
+			}
+		});
+
+		// Sort alphabetically
+		this.alphabet.sort();
 
 		// Create a Tape using the data
 		this.tape = new Tape(data);
@@ -223,6 +239,8 @@
 				this.tape.moveRight();
 			}
 
+			this.previousState = this.state;
+
 			this.state = transition.toState;
 
 			this.tape.trim();
@@ -243,9 +261,12 @@
 	 */
 	cTM.prototype.reset = function () {
 		delete this.transitions;
+		delete this.alphabet;
 		delete this.initialState;
 		delete this.finalStates;
+		delete this.states;
 		delete this.state;
+		delete this.previousState;
 		delete this.tape;
 	};
 

@@ -66,6 +66,8 @@
 	let emulatorInput;
 	let emulatorError;
 	let emulatorStats;
+	let emulatorVis;
+	let emulatorVisNetwork;
 	let emulatorTape;
 	let emulatorBtnStep;
 	let emulatorBtnRun;
@@ -75,7 +77,6 @@
 	let testCTM = new cTMIDE.cTM;
 	let testInput;
 	let testExpectedOutput;
-	let testType;
 	let testBtnAdd;
 	let testCases;
 	let testFields;
@@ -84,14 +85,6 @@
 
 	let validate;
 	let validateCTM = new cTMIDE.cTM;
-
-	let hints = {
-		testType: {
-			title: "Test type",
-			text: "When set to Exact match, the test will run successfully iff the tape contains only the expected output. Reading starts at the tape head's position upon termination.\n\n" +
-				"When set to Substring, the test will run successfully iff the expected output is a substring of the tape."
-		}
-	};
 
 	let views = {
 		browse: {
@@ -129,6 +122,9 @@
 			onEnter: () => {
 				emulatorInput.value = "";
 				emulatorOnInputChanged();
+
+				emulatorCreateVis();
+				emulatorUpdateVis();
 			},
 			// This method is kind of being abused by other methods
 			// that shouldn't be touching it. Oh well =)
@@ -145,6 +141,11 @@
 				emulatorTape.innerHTML = "";
 				emulatorStats.innerHTML = "";
 				emulatorSteps = 0;
+
+				if (emulatorVisNetwork && !leaveInput) {
+					emulatorVisNetwork.destroy();
+					emulatorVisNetwork = null;
+				}
 			}
 		},
 
@@ -167,7 +168,6 @@
 				testCases.innerHTML = "";
 				testInput.value = "";
 				testExpectedOutput.value = "";
-				testType.value = testType.children[0].value;
 			}
 		},
 
@@ -204,16 +204,7 @@
 						}
 					});
 
-					validateCTM.transitions.forEach((transition) => {
-						if (alphabet.indexOf(transition.input) === -1 && transition.input !== "#") {
-							alphabet.push(transition.input);
-						}
-						if (alphabet.indexOf(transition.output) === -1 && transition.output !== "#") {
-							alphabet.push(transition.output);
-						}
-					});
-
-					messages.push("Alphabet: " + alphabet.sort().join(", ") + ".");
+					messages.push("Alphabet: " + validateCTM.alphabet.join(", ") + ".");
 					messages.push("Number of transitions: " + validateCTM.transitions.length + ".");
 					messages.push("Initial state: " + validateCTM.initialState + ".");
 					messages.push("Final states: " + validateCTM.finalStates.slice(0).sort().join(", ") + ".");
@@ -247,6 +238,7 @@
 		emulatorInput = document.getElementsByClassName("emulator-input")[0];
 		emulatorError = document.getElementsByClassName("emulator-error")[0];
 		emulatorStats = document.getElementsByClassName("emulator-stats")[0];
+		emulatorVis = document.getElementsByClassName("emulator-vis")[0];
 		emulatorTape = document.getElementsByClassName("emulator-tape")[0];
 		emulatorBtnStep = document.getElementsByClassName("emulator-btn-step")[0];
 		emulatorBtnRun = document.getElementsByClassName("emulator-btn-run")[0];
@@ -254,7 +246,6 @@
 
 		testInput = document.getElementsByClassName("test-input")[0];
 		testExpectedOutput = document.getElementsByClassName("test-expected-output")[0];
-		testType = document.getElementsByClassName("test-type")[0];
 		testBtnAdd = document.getElementsByClassName("test-btn-add")[0];
 		testCases = document.getElementsByClassName("test-cases")[0];
 		testFields = document.getElementsByClassName("test-fields")[0];
@@ -275,10 +266,15 @@
 
 		// Bind listeners
 		window.addEventListener("beforeunload", (e) => {
-
 			if (!editorIsProgramPristine()) {
 				e.returnValue = "Are you sure you want to close this tab? There may be unsaved changes!";
 				return e.returnValue;
+			}
+		});
+
+		window.addEventListener("resize", () => {
+			if (activeViewName === "emulator") {
+				emulatorUpdateVisSize();
 			}
 		});
 
@@ -339,6 +335,7 @@
 
 			emulatorUpdateTapeRepresentation();
 			emulatorUpdateStats();
+			emulatorUpdateVis();
 		});
 
 		emulatorBtnRun.addEventListener("click", () => {
@@ -372,6 +369,7 @@
 
 			emulatorUpdateTapeRepresentation();
 			emulatorUpdateStats();
+			emulatorUpdateVis();
 		});
 
 		emulatorBtnRestart.addEventListener("click", () => {
@@ -381,10 +379,9 @@
 		// Test listeners
 
 		testBtnAdd.addEventListener("click", () => {
-			testAddCase(testInput.value, testExpectedOutput.value, testType.value);
+			testAddCase(testInput.value, testExpectedOutput.value);
 			testInput.value = "";
 			testExpectedOutput.value = "";
-			testType.value = testType.children[0].value;
 		});
 
 		testBtnRunAll.addEventListener("click", () => {
@@ -537,7 +534,7 @@
 		// Reset everything but keep input
 		views.emulator.onLeave(true);
 
-		let errors = emulatorCTM.initialize(editor.value, emulatorInput.value.split(""));
+		let errors = emulatorCTM.initialize(editor.value, emulatorInput.value.split(" ").join("#").split(""));
 
 		if (errors) {
 			emulatorError.innerHTML = errors.join("<br>");
@@ -549,6 +546,7 @@
 
 			emulatorUpdateTapeRepresentation();
 			emulatorUpdateStats();
+			emulatorUpdateVis();
 		}
 	};
 
@@ -583,7 +581,7 @@
 
 			emulatorTape.innerHTML += centerHTML;
 
-			if (data[data.length - 1] !== "#") {
+			if (data[data.length - 1] !== "#" || (data.length === 1 && data[0] === "#")) {
 				emulatorTape.innerHTML += blank;
 			}
 		} else if (position >= data.length) {
@@ -604,11 +602,87 @@
 	// In emulator: update statistics
 	function emulatorUpdateStats () {
 		emulatorStats.innerHTML = "";
-		if (emulatorCTM.isFinished()) {
-			emulatorStats.innerHTML += "<b>Finished</b><br><br>";
-		}
-		emulatorStats.innerHTML += "Transitions taken: " + emulatorSteps + "<br>" +
+		emulatorStats.innerHTML += "Finished: " + (emulatorCTM.isFinished() ? "<b>Yes</b>" : "No") + "<br>" +
+			"Transitions taken: " + emulatorSteps + "<br>" +
 			"Current state: " + emulatorCTM.state;
+	};
+
+	function emulatorCreateVis () {
+		let nodes = [];
+		let edges = [];
+
+		let data = {
+			nodes: nodes,
+			edges: edges
+		};
+
+		let transitions = {};
+
+		emulatorCTM.transitions.forEach((transition) => {
+			if (!transitions[transition.fromState]) {
+				transitions[transition.fromState] = [transition.toState];
+			} else if (transitions[transition.fromState].indexOf(transition.toState) === -1) {
+				transitions[transition.fromState].push(transition.toState);
+			}
+		});
+
+		emulatorCTM.states.forEach((state, index) => {
+			nodes.push({ id: state, label: state, x: index });
+			if (transitions[state]) {
+				transitions[state].forEach((toState) => {
+					edges.push({ id: index + "-" + emulatorCTM.states.indexOf(toState), from: state, to: toState, arrows: "to" });
+				});
+			}
+		});
+
+		let options = {
+			edges: {
+				smooth: {
+					type: 'continuous'
+				}
+			},
+			interaction: {
+				dragNodes: false,
+				dragView: false,
+				zoomView: false,
+				selectable: false
+			},
+			physics: {
+				solver: "forceAtlas2Based"
+			}
+		};
+
+		emulatorVisNetwork = new vis.Network(emulatorVis, data, options);
+
+		emulatorVisNetwork.on("resize", () => {
+			emulatorUpdateVisSize();
+		})
+	};
+
+	function emulatorUpdateVis () {
+		if (!emulatorVisNetwork) {
+			return;
+		}
+
+		// Highlight
+		if (emulatorCTM.previousState) {
+			emulatorVisNetwork.setSelection({
+				nodes: [emulatorCTM.state],
+				edges: [emulatorCTM.states.indexOf(emulatorCTM.previousState) + "-" + emulatorCTM.states.indexOf(emulatorCTM.state)]
+			}, {
+				highlightEdges: false
+			});
+		} else {
+			emulatorVisNetwork.selectNodes([emulatorCTM.state]);
+		}
+	};
+
+	function emulatorUpdateVisSize () {
+		// Resize
+		let rect = emulatorVis.getBoundingClientRect();
+		let rest = window.innerHeight - rect.top - rect.height;
+		emulatorVis.style.height = (rect.height + rest) + "px";
+		emulatorVis.style.width = (window.innerWidth * 0.95) + "px";
 	};
 
 	// Functions for TEST
@@ -623,13 +697,12 @@
 		} else {
 			testBtnRunAll.classList.remove("hidden");
 
-			let html = "<table><tr><td>Input</td><td>Expected output</td><td>Type</td><td></td><td></td></tr>";
+			let html = "<table><tr><td>Input</td><td>Expected output</td><td></td><td></td></tr>";
 			cases.forEach((_case, index) => {
-				let typeName = [].find.call(testType.children, (node) => node.value === _case.type).innerHTML;
-				html += "<tr><td>" + _case.input + "</td><td>" + _case.expectedOutput + "</td><td>" + typeName + "</td><td><a href=\"javascript:void(0);\" data-run-case=\"" + index + "\">Run</a></td><td><a href=\"javascript:void(0);\" data-delete-case=\"" + index + "\">Delete</a></td></tr>";
+				html += "<tr><td>" + _case.input + "</td><td>" + _case.expectedOutput + "</td><td><a href=\"javascript:void(0);\" data-run-case=\"" + index + "\">Run</a></td><td><a href=\"javascript:void(0);\" data-delete-case=\"" + index + "\">Delete</a></td></tr>";
 			});
 
-			testCases.innerHTML = html;
+			testCases.innerHTML = html = "</table>";
 
 			[].forEach.call(testCases.getElementsByTagName("A"), (node) => {
 				node.addEventListener("click", () => {
@@ -690,11 +763,10 @@
 		}
 	};
 
-	function testAddCase (input, expectedOutput, type) {
+	function testAddCase (input, expectedOutput) {
 		let _case = {
 			input: input,
-			expectedOutput: expectedOutput,
-			type: type
+			expectedOutput: expectedOutput
 		};
 
 		let content = files.read(currentFilename);
@@ -729,7 +801,7 @@
 
 	function testRunCaseInternal (content, _case) {
 		testCTM.reset();
-		let errors = testCTM.initialize(content, _case.input.split(""));
+		let errors = testCTM.initialize(content, _case.input.split(" ").join("#").split(""));
 
 		if (errors) {
 			return { "type": "error", title: "Test run failed", text: "Critical error(s) detected:\n\n" + errors.join("\n") };
@@ -757,15 +829,9 @@
 
 		let data = testCTM.tape.getData();
 
-		if ((_case.type === "substring" && testSubstring(data, _case.expectedOutput)) || (_case.type === "exact" && testExact(data, _case.expectedOutput, testCTM.tape.getPosition()))) {
+		if (testExact(data, _case.expectedOutput, testCTM.tape.getPosition())) {
 			return { type: "success", title: "Test run succeeded!", text: "The test run succeeded with " + stepCounter + " transitions taken." };
-		} else {
-			return { type: "error", title: "Test run failed!", text: "The test run failed because of an output mismatch." };
 		}
-	};
-
-	function testSubstring (data, expectedOutput) {
-		return data.join("").indexOf(_case.expectedOutput) !== -1;
 	};
 
 	function testExact (data, expectedOutput, position) {

@@ -9,6 +9,7 @@
   "homepage": "",
   "private": true,
   "dependencies": {
-    "sweetalert": "^1.1.3"
+    "sweetalert": "^1.1.3",
+    "vis": "^4.20.0"
   }
 }
