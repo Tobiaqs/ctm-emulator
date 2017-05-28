@@ -648,7 +648,7 @@
 				selectable: false
 			},
 			physics: {
-				solver: "forceAtlas2Based"
+				solver: "hierarchicalRepulsion"
 			}
 		};
 
