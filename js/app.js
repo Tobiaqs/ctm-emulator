@@ -608,6 +608,11 @@
 	};
 
 	function emulatorCreateVis () {
+		// Don't visualize if there are no transitions
+		if (!emulatorCTM.transitions) {
+			return;
+		}
+
 		let nodes = [];
 		let edges = [];
 
@@ -656,7 +661,7 @@
 
 		emulatorVisNetwork.on("resize", () => {
 			emulatorUpdateVisSize();
-		})
+		});
 	};
 
 	function emulatorUpdateVis () {
@@ -683,6 +688,7 @@
 		let rest = window.innerHeight - rect.top - rect.height;
 		emulatorVis.style.height = (rect.height + rest) + "px";
 		emulatorVis.style.width = (window.innerWidth * 0.95) + "px";
+		emulatorVis.style.marginLeft = (window.innerWidth * 0.025) + "px";
 	};
 
 	// Functions for TEST
@@ -702,7 +708,7 @@
 				html += "<tr><td>" + _case.input + "</td><td>" + _case.expectedOutput + "</td><td><a href=\"javascript:void(0);\" data-run-case=\"" + index + "\">Run</a></td><td><a href=\"javascript:void(0);\" data-delete-case=\"" + index + "\">Delete</a></td></tr>";
 			});
 
-			testCases.innerHTML = html = "</table>";
+			testCases.innerHTML = html + "</table>";
 
 			[].forEach.call(testCases.getElementsByTagName("A"), (node) => {
 				node.addEventListener("click", () => {
